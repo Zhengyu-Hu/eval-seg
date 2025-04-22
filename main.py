@@ -82,6 +82,29 @@ def calculate_iou(mask_pred, mask_gt):
     iou = np.sum(intersection) / union_sum
     return float(iou)
 
+def calculate_accuracy(mask_pred, mask_gt):
+    """
+    计算两个布尔型掩码之间的准确率(Accuracy)
+    
+    参数:
+        mask_pred (np.ndarray): 预测掩码(布尔型或0-1)
+        mask_gt (np.ndarray): 真实掩码(布尔型或0-1)
+    
+    返回:
+        float: 准确率值(0-1之间)
+    """
+    # 确保输入为布尔型或0-1数值
+    mask_pred = mask_pred.astype(bool)
+    mask_gt = mask_gt.astype(bool)
+    
+    # 计算正确预测的像素总数
+    correct = np.sum(mask_pred == mask_gt)
+    total = mask_gt.size
+    
+    # 避免除以零的情况(理论上不会发生)
+    accuracy = correct / total if total > 0 else 0.0
+    return float(accuracy)
+
 results = {}
 def run_one_exp(exp_name):
     results[exp_name] = {}
@@ -155,8 +178,10 @@ def run_one_exp(exp_name):
     gt_mask = np.array(gt_mask)
 
     iou = calculate_iou(novel_mask, gt_mask)
+    acc = calculate_accuracy(novel_mask, gt_mask)
     result['iou'] = iou
-    print(f"==>> {exp_name}'s IoU: {iou}")
+    result['acc'] = acc
+    print(f"{exp_name}==>> IoU: {iou} acc: {acc}")
 
     # 存储新视角掩码
     novel_fig = plt.figure()
@@ -165,10 +190,8 @@ def run_one_exp(exp_name):
 
 exp_names = sorted(os.listdir('data/llff/masks'))
 for exp in exp_names:
-    print('\n')
     print("-"*100)
     run_one_exp(exp)
-    print('\n')
 print(results)
 
 df = pd.DataFrame.from_dict(results, orient='index')
